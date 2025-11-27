@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Feliz cumple Danna</title>
+  <style>
+    :root{--bg:#0b1020;--card:#0f1724}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    body{background:linear-gradient(180deg,#071029 0%, #0b1530 100%);display:flex;align-items:center;justify-content:center;color:#fff}
+    .app{width:100%;max-width:1000px;height:90vh;background:rgba(255,255,255,0.03);border-radius:18px;overflow:hidden;box-shadow:0 10px 40px rgba(2,6,23,0.6);position:relative}
+    .stage{height:100%;display:grid;grid-template-columns:1fr 340px}
+    .left{position:relative;display:flex;align-items:center;justify-content:center;background:linear-gradient(120deg, rgba(255,255,255,0.02), transparent);}
+    .carousel{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+    .slide{position:absolute;max-width:100%;max-height:100%;object-fit:contain;border-radius:12px;transition:transform .6s ease, opacity .45s ease;opacity:0;transform:scale(.96)}
+    .slide.show{opacity:1;transform:scale(1)}
+    .controls{position:absolute;left:12px;top:12px;display:flex;gap:8px}
+    .btn{background:rgba(255,255,255,0.06);backdrop-filter:blur(4px);border-radius:10px;padding:8px 10px;cursor:pointer;border:0;color:#fff}
+    .right{padding:18px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);display:flex;flex-direction:column;gap:12px}
+    .panel{background:rgba(0,0,0,0.18);border-radius:12px;padding:12px;flex:0 0 auto}
+    .uploader{display:flex;flex-direction:column;gap:8px;align-items:stretch}
+    .file{background:rgba(255,255,255,0.03);padding:10px;border-radius:8px;display:flex;align-items:center;justify-content:space-between}
+    .small{font-size:12px;opacity:.8}
+    .big-ico{font-size:28px}
+    .audio-row{display:flex;gap:8px;align-items:center}
+    .confetti-canvas{position:absolute;inset:0;pointer-events:none}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .ghost{opacity:.6;font-size:13px}
+    input[type=file]{display:none}
+    .center-hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);opacity:.08;font-size:72px;pointer-events:none}
+    footer{position:absolute;right:12px;bottom:12px;font-size:12px;color:rgba(255,255,255,0.6)}
+    @media(max-width:780px){.stage{grid-template-columns:1fr}.right{display:none}}
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <canvas class="confetti-canvas" id="confetti"></canvas>
+    <div class="stage">
+      <div class="left">
+        <div class="carousel" id="carousel">
+          <!-- imágenes cargadas aquí -->
+          <div class="center-hint" id="hint">☺</div>
+        </div>
+        <div class="controls" style="z-index:30">
+          <button class="btn" id="prev" title="Anterior">◀</button>
+          <button class="btn" id="next" title="Siguiente">▶</button>
+          <button class="btn" id="party" title="Sorpresa">🎉</button>
+        </div>
+      </div>
+      <div class="right">
+        <div class="panel uploader">
+          <label for="files" class="file" style="cursor:pointer">
+            <span>📷 Añadir fotos</span>
+            <span class="small">PNG/JPG (arrastra también)</span>
+          </label>
+          <input id="files" type="file" accept="image/*" multiple>
+          <div class="ghost small">Arrastra imágenes al recuadro izquierdo o usa "Añadir fotos".</div>
+        </div>
+
+        <div class="panel">
+          <div class="audio-row">
+            <label for="audio" class="btn" style="padding:8px">🎵 Añadir música</label>
+            <input id="audio" type="file" accept="audio/*">
+            <button class="btn" id="play">▶</button>
+            <button class="btn" id="stop">⏹</button>
+          </div>
+          <div class="small ghost">Reproduce una canción que a ella le guste o una instrumental corta.</div>
+        </div>
+
+        <div class="panel actions">
+          <button class="btn" id="download" title="Descargar como página">⬇ Guardar página</button>
+          <button class="btn" id="qr">🔗 Generar enlace/QR</button>
+          <div class="small ghost">Compartir por WhatsApp/QR para que lo abra en su teléfono.</div>
+        </div>
+
+      </div>
+    </div>
+    <footer>Presiona 🎉 para sorpresa</footer>
+  </div>
+
+  <script>
+    // Pequeña app: drag-drop, carousel, confetti, audio, y 'guardar página'
+    const carousel = document.getElementById('carousel');
+    const filesInput = document.getElementById('files');
+    const audioInput = document.getElementById('audio');
+    const prev = document.getElementById('prev');
+    const next = document.getElementById('next');
+    const party = document.getElementById('party');
+    const play = document.getElementById('play');
+    const stop = document.getElementById('stop');
+    const hint = document.getElementById('hint');
+    const confettiCanvas = document.getElementById('confetti');
+    let images = [];
+    let idx = 0;
+    let audio = new Audio();
+
+    function refresh(){
+      carousel.querySelectorAll('.slide').forEach(s=>s.remove());
+      if(!images.length){hint.style.display='block'; return}
+      hint.style.display='none';
+      images.forEach((src,i)=>{
+        const img = document.createElement('img');
+        img.src = src; img.className='slide';
+        if(i===idx) img.classList.add('show');
+        img.addEventListener('click', ()=>fireConfetti());
+        carousel.appendChild(img);
+      });
+    }
+
+    function show(n){ if(!images.length) return; idx=(n+images.length)%images.length; refresh(); }
+    prev.onclick=()=>show(idx-1); next.onclick=()=>show(idx+1);
+
+    filesInput.addEventListener('change', e=>{
+      const list=Array.from(e.target.files);
+      list.forEach(f=>{
+        const r=new FileReader(); r.onload=ev=>{ images.push(ev.target.result); idx=images.length-1; refresh(); };
+        r.readAsDataURL(f);
+      });
+    });
+
+    // dragdrop
+    carousel.addEventListener('dragover', e=>{e.preventDefault();carousel.style.filter='brightness(.95)';});
+    carousel.addEventListener('dragleave', e=>{carousel.style.filter='';});
+    carousel.addEventListener('drop', e=>{e.preventDefault();carousel.style.filter='';
+      const dt = e.dataTransfer.files; const arr=Array.from(dt);
+      arr.forEach(f=>{ if(f.type.startsWith('image/')){ const r=new FileReader(); r.onload=ev=>{ images.push(ev.target.result); idx=images.length-1; refresh(); }; r.readAsDataURL(f); } });
+    });
+
+    // audio
+    audioInput.addEventListener('change', e=>{
+      const f=e.target.files[0]; if(!f) return; const u=URL.createObjectURL(f); audio.src=u; audio.loop=false; audio.load();
+    });
+    play.onclick=()=>audio.play(); stop.onclick=()=>{audio.pause(); audio.currentTime=0};
+
+    // confetti simple
+    function fireConfetti(){
+      const ctx = confettiCanvas.getContext('2d'); const w=confettiCanvas.width=confettiCanvas.clientWidth; const h=confettiCanvas.height=confettiCanvas.clientHeight;
+      const pieces=[]; for(let i=0;i<90;i++){pieces.push({x:w/2,y:h/2, vx:(Math.random()-0.5)*10, vy:(Math.random()-2)*10, r:4+Math.random()*6, c:['#ffd166','#ef476f','#06d6a0','#118ab2'][Math.floor(Math.random()*4)], rot:Math.random()*360});}
+      let t=0; function frame(){ t++; ctx.clearRect(0,0,w,h); pieces.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.vy+=0.4; p.rot+=4; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180); ctx.fillStyle=p.c; ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r); ctx.restore(); }); if(t<120) requestAnimationFrame(frame); }
+      frame();
+    }
+    party.onclick=()=>{ fireConfetti(); audio.play(); }
+
+    // save page: create downloadable single-file html with current images embedded
+    document.getElementById('download').addEventListener('click', ()=>{
+      const doc = document.documentElement.outerHTML;
+      const blob = new Blob([doc],{type:'text/html'});
+      const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='regalo-danna.html'; a.click();
+    });
+
+    // quick keyboard
+    window.addEventListener('keydown', e=>{ if(e.key==='ArrowRight') next.click(); if(e.key==='ArrowLeft') prev.click(); if(e.key===' ') party.click(); });
+
+    // small resize
+    function resizeCanvas(){ confettiCanvas.width = confettiCanvas.clientWidth; confettiCanvas.height = confettiCanvas.clientHeight; }
+    window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+    // initial
+    refresh();
+  </script>
+</body>
+</html>

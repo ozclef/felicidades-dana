@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abrazo Emocional con Estrellas</title>
+<style>
+  body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #ffdede, #ffe4e1, #fff0f5);
+    font-family: 'Segoe UI', sans-serif;
+    overflow: hidden;
+  }
+
+  .cobija {
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f6d365, #fda085);
+    box-shadow: 0 0 60px rgba(253, 160, 133, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 30px;
+    color: #fff;
+    font-size: 1.2rem;
+    line-height: 1.5;
+    animation: pulse 3s infinite;
+    position: relative;
+    z-index: 2;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 60px rgba(253, 160, 133, 0.6); }
+    50% { transform: scale(1.05); box-shadow: 0 0 90px rgba(253, 160, 133, 0.8); }
+  }
+
+  .estrella {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #fff;
+    border-radius: 50%;
+    opacity: 0.8;
+    animation: float 5s infinite linear;
+  }
+
+  @keyframes float {
+    0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { transform: translateY(-10vh) translateX(50px); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+  <div class="cobija">
+    Este abrazo digital es como un sueter suave y una cobija con olor a DOWNY. <br>
+    Pura ternura y compañía, para sentir que todo está bien.
+  </div>
+
+  <!-- Generar 30 estrellas -->
+  <script>
+    const body = document.body;
+    for (let i = 0; i < 30; i++) {
+      const star = document.createElement('div');
+      star.className = 'estrella';
+      star.style.left = Math.random() * window.innerWidth + 'px';
+      star.style.animationDuration = (3 + Math.random() * 3) + 's';
+      star.style.width = star.style.height = (2 + Math.random() * 4) + 'px';
+      body.appendChild(star);
+    }
+  </script>
+</body>
+</html>
